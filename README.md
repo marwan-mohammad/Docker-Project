@@ -1,86 +1,105 @@
-# 1. Set Up the Directory Structure
+# Project Name
 
-![image](https://github.com/user-attachments/assets/99cb5903-1455-4a56-8cd5-371157534e90)
+## Overview
 
-# 2. Create the Go Application for the Backend
-Directory: three-tier-app/backend/
+This project is a multi-tier application using Docker Compose, consisting of a proxy server, a backend service, and a MySQL database. The services are designed to run on separate networks to ensure modularity and security.
 
-![image](https://github.com/user-attachments/assets/42dec2b5-1449-4106-8db4-a8f32f39d990)
+## Architecture
 
-main.go:
+![Docker_Project](https://github.com/user-attachments/assets/9eb2fb71-9547-4328-8d3e-82ad7e45ef6d)
 
-![image](https://github.com/user-attachments/assets/47e9e9bd-c0d9-4fdf-b2eb-af5e05e07b50)
-
-go.mod:
-
-![image](https://github.com/user-attachments/assets/7b4ebd4d-ac31-464c-b0a9-5a04f3b563a3)
-
-go.sum:
-
-![image](https://github.com/user-attachments/assets/ff26f45e-314e-4780-a08b-f5cfbf0cca4e)
+## Output
+![Screenshot 2024-09-14 174119](https://github.com/user-attachments/assets/c740d8e0-eb3e-4212-be15-84d37917db46)
 
 
 
+## Services
 
-# 3. Create Dockerfile for the Backend
+### 1. Proxy
+![image](https://github.com/user-attachments/assets/613c10e7-214a-45bf-ab23-0a4989b3f398)
 
-Directory: three-tier-app/backend/
-
-![image](https://github.com/user-attachments/assets/cdf70399-8ec5-4704-8342-169fffe39fa7)
-
-![image](https://github.com/user-attachments/assets/4c0a2726-8fa7-4699-9943-eaf18c2677b3)
-
-# 4. Set Up the Database
-
-Directory: three-tier-app/database/
-
-![image](https://github.com/user-attachments/assets/9a83ae16-6bfb-494c-b0f8-17ad9bdf63b7)
-
-![image](https://github.com/user-attachments/assets/0ab9d5b1-08c2-4456-9aab-0756b034f408)
-
-after that i created db-password.txt file and added MySQL root password
-
-# 5. Set Up the Proxy (Nginx)
-Directory: three-tier-app/proxy/
-
-![image](https://github.com/user-attachments/assets/a067950c-d56b-4bd7-b13e-b2b95877141d)
-
-![image](https://github.com/user-attachments/assets/206c99fa-76fe-4704-a446-ac2dbbdf9b2e)
-
-then I generated ssl Certificate:
-
-![image](https://github.com/user-attachments/assets/61ef7ed0-9fe2-405e-902c-888daba9bee8)
-
-# 6. Create docker-compose.yml
-
-Directory: three-tier-app/
-
-![image](https://github.com/user-attachments/assets/34db0b69-bad9-41c0-96fe-18d9c399bfb3)
-
-# 7. Build and Run the Application
-
-![image](https://github.com/user-attachments/assets/bdcd1f8f-0403-4d10-9b24-9962e76fbd33)
-
-![Screenshot (714)](https://github.com/user-attachments/assets/675652b2-76da-4903-94f3-86abff591dac)
-![Screenshot (715)](https://github.com/user-attachments/assets/37d772f8-be55-4cac-9d5f-ee9351457a54)
-![Screenshot (716)](https://github.com/user-attachments/assets/5d40f18e-3d16-4a1a-b233-63feab3df798)
-![Screenshot (717)](https://github.com/user-attachments/assets/3b6573f2-421b-4c69-ad7c-99b731e20ab6)
-![Screenshot (718)](https://github.com/user-attachments/assets/62e907b0-d3fd-4045-b341-e25fea63eccc)
-![Screenshot (719)](https://github.com/user-attachments/assets/5c0936eb-753c-49a9-a09d-835a61c8b8ac)
-![Screenshot (720)](https://github.com/user-attachments/assets/b2c277cc-b5a1-40e0-9dcd-658613b56c4f)
-![Screenshot (721)](https://github.com/user-attachments/assets/93273f5d-573c-4f99-bf35-d513de2ac9c0)
-![Screenshot (722)](https://github.com/user-attachments/assets/66ec60ce-bdab-4a77-9dcd-8cfa9940ac89)
-![Screenshot (723)](https://github.com/user-attachments/assets/e4d70836-b0fe-423d-b8ff-d4be8119cd97)
-![Screenshot (724)](https://github.com/user-attachments/assets/87660751-0166-4949-9902-7cbaa50e4d4f)
+![image](https://github.com/user-attachments/assets/9cc9d276-0923-477f-862b-3c712f40942d)
 
 
+1. **`FROM nginx:alpine`**: 
+   - **Purpose**: Sets the base image for the Docker container.
+   - **Details**: Uses the official Nginx image based on Alpine Linux, which is known for its small size and efficiency.
+
+2. **`COPY ./nginx.conf /etc/nginx/nginx.conf`**: 
+   - **Purpose**: Copies a custom Nginx configuration file into the container.
+   - **Details**: The local `nginx.conf` file is placed in the container's Nginx configuration directory, allowing you to customize the server settings.
+
+3. **`CMD ["nginx", "-g", "daemon off;"]`**: 
+   - **Purpose**: Specifies the command to run when the container starts.
+   - **Details**: Runs Nginx with the `daemon off` option, which keeps Nginx running in the foreground. This is necessary for Docker to manage the process.
+
+4. **`EXPOSE 80`**: 
+   - **Purpose**: Exposes port 80 on the container.
+   - **Details**: Allows external access to the web server running inside the container.
+
+- **Image**: `nginx_proxy`
+- **Build Context**: `./nginx`
+- **Ports**: 
+  - `8080:8080`
+- **Networks**: 
+  - `proxy-network`
+  - `shared-network`
+- **Dependencies**: 
+  - `backend`
+
+**Description**: This service uses Nginx as a reverse proxy. It routes requests to the backend service.
+
+### 2. Backend
+
+![image](https://github.com/user-attachments/assets/2bb4fcfb-a275-4c39-b376-0a5fc2a2a201)
+
+- **Image**: `backend`
+- **Build Context**: `./backend`
+- **Ports**:
+  - `8000:8000`
+- **Networks**:
+  - `backend-network`
+  - `shared-network`
+- **Dependencies**:
+  - `db`
+- **Secrets**:
+  - `db-password`
+
+**Description**: This service is the application backend, which processes data and communicates with the database.
+
+### 3. Database (MySQL)
+
+- **Image**: `mysql:8.0`
+- **Environment**:
+  - `MYSQL_ROOT_PASSWORD_FILE`: `/run/secrets/db-password`
+  - `MYSQL_DATABASE`: `example`
+- **Volumes**:
+  - `db_data:/var/lib/mysql`
+- **Secrets**:
+  - `db-password`
+- **Networks**:
+  - `db-network`
+  - `shared-network`
+
+**Description**: This service provides a MySQL database for storing application data.
+
+## Docker-compose file
+
+![image](https://github.com/user-attachments/assets/87e3a32d-66b8-4e81-87d5-7cdec704ab77)
 
 
+## Networks
 
+- **proxy-network**: Used for communication between the proxy and other services.
+- **backend-network**: Used for communication between the backend service and other services.
+- **db-network**: Used for communication between the database service and other services.
+- **shared-network**: Allows communication between services across different networks.
 
+## Secrets
 
+- **db-password**: The password for the MySQL root user, stored securely.
 
+## Volumes
 
-
-
+- **db_data**: Persistent storage for MySQL data.
 
